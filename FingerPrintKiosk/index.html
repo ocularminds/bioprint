@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'"/>
+    <title>Fingerprint Kiosk</title>
+</head>
+<body>
+    <h1>Fingerprint Kiosk</h1>
+    <div>
+        <h2>Initiate Request</h2>
+        <input id="accountNumber" type="text" placeholder="Account Number">
+        <input id="kioskStationID" type="text" placeholder="Kiosk Station ID">
+        <button id="btnInitiate">Initiate Request</button>
+    </div>
+
+    <div>
+        <h2>FingerPrint Verification</h2>
+        <input id="requestId" type="text" placeholder="Request ID">
+        <input id="status" type="text" placeholder="Status">
+        <img src="bin/fingerprint.bmp" height="150" width="100" alt/>
+        <button id="btnVerify">Scan And Verify</button>
+    </div>
+
+    <div>
+        <h2>Poll Requests</h2>
+        <input id="kioskStationID" type="text" placeholder="Kiosk Station ID">
+        <button id="btnGetAll">Poll Requests</button>
+        <button id="btnSelfTest">Self Test</button>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

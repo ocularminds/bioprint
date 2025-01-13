@@ -1,0 +1,21 @@
+{
+  "name": "fingerprintkiosk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "electron": "^33.0.2",
+    "ffi-napi": "^4.0.3",
+    "koffi": "^2.9.1",
+    "ref-array-napi": "^1.2.2",
+    "ref-napi": "^3.0.3"
+  }
+}
