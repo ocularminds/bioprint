@@ -10,6 +10,7 @@ const LEFT_THUMB = 1; // Replace with correct constant for finger position
 const BYTE_ARRAY = koffi.struct(`BYTE_ARRAY`, {data: koffi.array('uint8', IENGINE_MAX_ISO_TEMPLATE_SIZE,'Array')});
 const INT_PTR = koffi.pointer('int');
 const FingerLibrary = {
+  IEngine_GetErrorMessage: lib.func('const char* IEngine_GetErrorMessage(int* errorcode)'),
   IEngine_GetHwid: lib.func('int IEngine_GetHwid(char* hwid, int* length)'),
   IEngine_GetVersionString: lib.func('const char* IEngine_GetVersionString()'),
   IEngine_Init: lib.func('int IEngine_Init()'),
@@ -28,10 +29,29 @@ const FingerLibrary = {
   ANSI_ConvertToISO: lib.func('int ANSI_ConvertToISO(BYTE_ARRAY* ansiTemplate, int* length, BYTE_ARRAY* isoTemplate)'),
   ISO_VerifyMatch: lib.func('int ISO_VerifyMatch(BYTE_ARRAY* isoTemplate1, BYTE_ARRAY* isoTemplate2, int maxRotation, int* score)'),
   ANSI_VerifyMatch: lib.func('int ANSI_VerifyMatch(BYTE_ARRAY* ansiTemplate1, BYTE_ARRAY* ansiTemplate2, int maxRotation, int* score)'),
-  IENGINE_MAX_ISO_TEMPLATE_SIZE: 1024,
-  IENGINE_MAX_ANSI_TEMPLATE_SIZE: 512,
-  LEFT_THUMB: 0,
-  RIGHT_THUMB: 1,
+  TemplateParams: {
+    BLOCK_SIZE_PIXELS: 12,
+    IENGINE_MAX_ANSI_TEMPLATE_SIZE: 1568,
+    IENGINE_MAX_ISO_TEMPLATE_SIZE: 1566,
+    IENGINE_MAX_IMAGE_HEIGHT: 1800,
+    IENGINE_MAX_IMAGE_WIDTH: 1800,
+    IENGINE_MIN_IMAGE_HEIGHT: 90,
+    IENGINE_MIN_IMAGE_WIDTH: 90,
+    MAX_MINUTIAE_POINTS: 256
+  },
+  Position: {
+    LEFT_INDEX: 0,
+    LEFT_LITTLE: 1,
+    LEFT_MIDDLE: 2,
+    LEFT_RING: 3,
+    LEFT_THUMB: 4,
+    RIGHT_INDEX: 5,
+    RIGHT_LITTLE: 6,
+    RIGHT_MIDDLE: 7,
+    RIGHT_RING: 8,
+    RIGHT_THUMB: 9,
+    UNKNOWN_FINGER: 10,
+  }
 };
 
 function checkError(msg, err) {

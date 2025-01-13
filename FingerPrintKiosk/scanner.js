@@ -4,7 +4,8 @@ const Biometrics = {
 
     checkError: (msg, err) => {
       if (err !== 0) {
-        console.log(`${msg}: Error code ${err} - ${err}`);
+        let errorDetails = FingerLibrary.IEngine_GetErrorMessage(err);
+        console.log(`${msg}: Error ${err} - ${errorDetails}`);
         //process.exit(err);
       }
     },
@@ -32,8 +33,7 @@ const Biometrics = {
     },
 
     getVersion: () => {      
-        const version = FingerLibrary.IEngine_GetVersionString(); 
-        return version;
+        return FingerLibrary.IEngine_GetVersionString(); 
     },
 
     loadImage: (fileName) => {
@@ -44,7 +44,7 @@ const Biometrics = {
         Biometrics.checkError("IEngine_LoadBMP", ret); 
         console.log(`First image: ${fileName} - image width: ${width.readInt32LE()}, image height: ${height.readInt32LE()}, length: ${length.readInt32LE()} B`); 
         let data = Buffer.alloc(length.readInt32LE()); 
-        ret = FingerLibrary.IEngine_LoadBMP(fileName, width, height, raw_data1, length); 
+        ret = FingerLibrary.IEngine_LoadBMP(fileName, width, height, data, length); 
         Biometrics.checkError("IEngine_LoadBMP", ret); 
         let quality = Buffer.alloc(4); 
         ret = FingerLibrary.IEngine_GetImageQuality(width.readInt32LE(), height.readInt32LE(), data, quality); 
@@ -74,7 +74,7 @@ const Biometrics = {
 
     createIsoTemplate: (width, height, data) => { 
         let isoTemplate = Buffer.alloc(1024); 
-        ret = FingerLibrary.ISO_CreateTemplate(width.readInt32LE(), height.readInt32LE(), data, isoTemplate);
+        ret = FingerLibrary.ISO_CreateTemplate(width, height, data, isoTemplate);
         Biometrics.checkError("ISO_CreateTemplate", ret);
         return isoTemplate;
     },
