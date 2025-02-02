@@ -21,12 +21,12 @@ document.getElementById('btnSelfTest').addEventListener('click', async () => {
         const {width, height, data} = response;
         const isoTemplate1 = await window.biometrics.createIsoTemplate(width, height, data);
         const isoTemplate2 = await window.biometrics.createIsoTemplate(resp.width, resp.height, resp.data);
+        const scoreISO = await window.biometrics.isoVerifyMatch(isoTemplate1, isoTemplate2);
     
         // ANSI create template
         const ansiTemplate1 = await window.biometrics.createAnsiTemplate(width, height, data);
         const ansiTemplate2 = await window.biometrics.createAnsiTemplate(resp.width, resp.height, resp.data);
         
-        const scoreISO = await window.biometrics.isoVerifyMatch(isoTemplate1, isoTemplate2);
         const scoreANSI = await window.biometrics.ansiVerifyMatch(ansiTemplate1, ansiTemplate2);
     
         // ANSI verify match

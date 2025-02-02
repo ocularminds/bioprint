@@ -1,0 +1,210 @@
+;
+; Copyright (c) DERMALOG Identification Systems GmbH
+;
+
+[Version]
+	Signature="$Windows NT$"
+	Class=USBDevice
+	ClassGUID={88BAE032-5A81-49f0-BC3D-A4FF138216D6}
+	CatalogFile=DermWinUSB.cat
+	Provider = %ProviderName%
+	DriverVer=01/22/2015, 1.9.1251.1
+
+[Manufacturer]
+	%ProviderName% = LF_WinUSB,NTamd64,NTx86
+
+
+
+; ================ Register Class ================
+[ClassInstall32]
+	AddReg=LF_WinUSB_AddClassReg
+
+[LF_WinUSB_AddClassReg]
+	HKR,,,,%ClassName%
+	HKR,,Icon,,"-21"
+
+ 
+
+; =========== Specify supported devices ==========
+[LF_WinUSB.NTamd64]	
+	%USB\FX2Example.DeviceDesc%   =USB_Install, USB\VID_04B4&PID_1004
+	%USB\FX2.DeviceDesc%          =USB_Install, USB\VID_04B4&PID_8613
+	%USB\ZF1.DeviceDesc%          =USB_Install, USB\VID_1491&PID_9860
+	%USB\Experimental.DeviceDesc% =USB_Install, USB\VID_1FBA&PID_0002
+	%USB\LF1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0010
+	%USB\LF10.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0011
+	%USB\ZF2.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0012
+	%USB\F1.DeviceDesc%           =USB_Install, USB\VID_1FBA&PID_0013
+	%USB\LF1E.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0014
+	%USB\LF2.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0015
+	%USB\FAT.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0016	
+	%USB\U12.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0017	
+	%USB\LF2E.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0018
+	%USB\LF10E.DeviceDesc%        =USB_Install, USB\VID_1FBA&PID_0019
+	%USB\LC1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_001A
+	; pid 0023 EB with serial driver
+	%USB\ZF1E.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0024
+	; pid 0025 LF1 with libusbk driver
+	%USB\ZF10.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0026
+	%USB\ZF1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0027
+	%USB\VF1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0031
+	%USB\LF10S.DeviceDesc%        =USB_Install, USB\VID_1FBA&PID_0040
+	%USB\LF10SE.DeviceDesc%       =USB_Install, USB\VID_1FBA&PID_0041
+	%USB\LP10.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0042
+	%USB\LP10E.DeviceDesc%        =USB_Install, USB\VID_1FBA&PID_0043
+	%USB\EB.DeviceDesc%           =USB_Install, USB\VID_1FBA&PID_00EB
+
+[LF_WinUSB.NTx86]	
+	%USB\FX2Example.DeviceDesc%   =USB_Install, USB\VID_04B4&PID_1004
+	%USB\FX2.DeviceDesc%          =USB_Install, USB\VID_04B4&PID_8613
+	%USB\ZF1.DeviceDesc%          =USB_Install, USB\VID_1491&PID_9860
+	%USB\Experimental.DeviceDesc% =USB_Install, USB\VID_1FBA&PID_0002
+	%USB\LF1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0010
+	%USB\LF10.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0011
+	%USB\ZF2.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0012
+	%USB\F1.DeviceDesc%           =USB_Install, USB\VID_1FBA&PID_0013
+	%USB\LF1E.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0014
+	%USB\LF2.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0015
+	%USB\FAT.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0016	
+	%USB\U12.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0017	
+	%USB\LF2E.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0018
+	%USB\LF10E.DeviceDesc%        =USB_Install, USB\VID_1FBA&PID_0019
+	%USB\LC1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_001A
+	; pid 0023 EB with serial driver
+	%USB\ZF1E.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0024
+	; pid 0025 LF1 with libusbk driver
+	%USB\ZF10.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0026
+	%USB\ZF1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0027
+	%USB\VF1.DeviceDesc%          =USB_Install, USB\VID_1FBA&PID_0031
+	%USB\LF10S.DeviceDesc%        =USB_Install, USB\VID_1FBA&PID_0040
+	%USB\LF10SE.DeviceDesc%       =USB_Install, USB\VID_1FBA&PID_0041
+	%USB\LP10.DeviceDesc%         =USB_Install, USB\VID_1FBA&PID_0042
+	%USB\LP10E.DeviceDesc%        =USB_Install, USB\VID_1FBA&PID_0043
+	%USB\EB.DeviceDesc%           =USB_Install, USB\VID_1FBA&PID_00EB
+
+; ================= Installation =================
+[USB_Install.NT]
+	Include=winusb.inf
+	Needs=WINUSB.NT
+
+[USB_Install.NT.Services]
+	Include=winusb.inf
+	AddService  = WUDFRd, 0x000001f8, WUDFRD_ServiceInstall
+	AddService  = WinUSB, 0x000001fa, WinUSB_ServiceInstall
+
+; =================== WUDFRd section =============================
+
+[WUDFRD_ServiceInstall]
+	ServiceType     = %SERVICE_KERNEL_DRIVER%
+	StartType       = %SERVICE_DEMAND_START%
+	ErrorControl    = %SERVICE_ERROR_NORMAL%
+	ServiceBinary   = %12%\WUDFRd.sys
+
+
+[WinUSB_ServiceInstall]
+	DisplayName     = %WinUSB_SvcDesc%
+	ServiceType     = %SERVICE_KERNEL_DRIVER%
+	StartType       = %SERVICE_DEMAND_START%
+	ErrorControl    = %SERVICE_ERROR_NORMAL%
+	ServiceBinary   = %12%\WinUSB.sys
+
+
+
+[USB_Install.NT.Wdf]
+	KmdfService=WINUSB, WinUsb_Install
+	UmdfService=UmdfSection, UmdfSection_install
+	UmdfServiceOrder=UmdfSection
+
+[WinUSB_Install]
+	KmdfLibraryVersion = 1.9
+
+[UmdfSection_install]
+	UMDFLibraryVersion = 1.9.0
+	ServiceBinary      = %12%\umdf\winusb.dll
+	DriverCLSID        = {0AE2EB4A-E710-4d77-B4CE-2E7A4861585C}	
+
+[USB_Install.NT.HW]
+	AddReg=Dev_AddReg
+
+[Dev_AddReg]
+	HKR,,DeviceInterfaceGUIDs,0x10000,{ec0db5fc-48f8-49f3-880b-ee51bd0de8c6},{0AE2EB4A-E710-4d77-B4CE-2E7A4861585C}
+	HKR,,"SurpriseRemovalOK",0x10001,1
+	HKR,,"Removable",0x10001,1
+	HKR,,"RemovalPolicy",0x10001,3
+
+
+
+[USB_Install.NT.CoInstallers]
+	AddReg=CoInstallers_AddReg
+	CopyFiles=CoInstallers_CopyFiles
+
+[CoInstallers_AddReg]
+	HKR,,CoInstallers32,0x00010000,"WinUSBCoInstaller2.dll","WUDFUpdate_01009.dll","WdfCoInstaller01009.dll,WdfCoInstaller"
+
+[CoInstallers_CopyFiles]
+	WinUSBCoInstaller2.dll
+	WdfCoInstaller01009.dll
+	WUDFUpdate_01009.dll
+	
+[DestinationDirs]
+	CoInstallers_CopyFiles=11
+
+
+; =========== Source Media Section ===============
+[SourceDisksNames]
+	1 = %DISK_NAME%,,,
+	
+[SourceDisksFiles.x86]
+	WinUSBCoInstaller2.dll=1,x86
+	WdfCoInstaller01009.dll=1,x86
+	WUDFUpdate_01009.dll=1,x86
+
+[SourceDisksFiles.amd64]
+	WinUSBCoInstaller2.dll=1,amd64
+	WdfCoInstaller01009.dll=1,amd64
+	WUDFUpdate_01009.dll=1,amd64
+
+
+; =================== Strings ====================
+[Strings]
+	ClassName      		= "Personal identification devices"
+	ProviderName   		= "DERMALOG Identification Systems GmbH"
+	DISK_NAME      		= "DERMALOG Drivers Installation Disk (Fingerprint Scanner)"
+	WinUSB_SvcDesc 		= "WinUSB Driver"
+
+	
+	USB\FX2Example.DeviceDesc   = "Cypress EZ-USB FX2 Example Device"
+	USB\FX2.DeviceDesc          = "CY7C68013 EZ-USB FX2 USB 2.0 Development Kit"
+	USB\Experimental.DeviceDesc = "DERMALOG Experimental Device"
+	
+	USB\F1.DeviceDesc	 = "DERMALOG Fingerprint Scanner F1"
+	USB\ZF1.DeviceDesc	 = "DERMALOG Fingerprint Scanner ZF1"
+	USB\ZF1E.DeviceDesc	 = "DERMALOG Fingerprint Scanner ZF1 Embedded"
+	USB\ZF2.DeviceDesc	 = "DERMALOG Fingerprint Scanner ZF2"
+	USB\ZF10.DeviceDesc	 = "DERMALOG Fingerprint Scanner ZF10"
+	USB\ZF10E.DeviceDesc = "DERMALOG Fingerprint Scanner ZF10 Embedded"
+	
+	USB\LF1.DeviceDesc	 = "DERMALOG Fingerprint Scanner LF1"
+	USB\LF1E.DeviceDesc	 = "DERMALOG Fingerprint Scanner LF1 Embedded"
+	USB\LF2.DeviceDesc	 = "DERMALOG Fingerprint Scanner LF2"
+	USB\LF2E.DeviceDesc	 = "DERMALOG Fingerprint Scanner LF2 Embedded"
+	USB\LF10.DeviceDesc	 = "DERMALOG Fingerprint Scanner LF10"
+	USB\LF10E.DeviceDesc = "DERMALOG Fingerprint Scanner LF10 Embedded"
+	USB\LF10S.DeviceDesc = "DERMALOG Fingerprint Scanner SlimScan"
+	USB\LF10SE.DeviceDesc= "DERMALOG Fingerprint Scanner SlimScan Embedded"
+	USB\LP10.DeviceDesc  = "DERMALOG Palm Scanner LP10"
+	USB\LP10E.DeviceDesc = "DERMALOG Palm Scanner LP10 Embedded"
+	
+	USB\VF1.DeviceDesc	 = "DERMALOG Combi Scanner VF1"
+	
+	USB\EB.DeviceDesc	 = "DERMALOG Embedded Board"
+	
+	USB\FAT.DeviceDesc	 = "DERMALOG FAT Spectrometer"
+	USB\U12.DeviceDesc	 = "DERMALOG U12 Scanner"
+	USB\LC1.DeviceDesc   = "DERMALOG LC1 Scanner"
+	
+	SERVICE_DEMAND_START            = 0x3 
+	SERVICE_KERNEL_DRIVER           = 0x1 
+	SERVICE_ERROR_NORMAL            = 0x1 
+
+

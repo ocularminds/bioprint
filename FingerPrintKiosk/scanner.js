@@ -1,135 +1,236 @@
-const FingerLibrary = require('./engine');
+const EventEmitter = require('events');
+const winston = require('winston');
+const edge = require('edge-js');
+const path = require('path');
+//const edge = require('./loader');
 
-const Biometrics = {
+class BioScanner extends EventEmitter {
+  constructor(logger = null) {
+    super();
+    //process.env.EDGE_APP_ROOT = __dirname;
+    //process.env.EDGE_USE_CORECLR = 0; // Force .NET Framework
+    process.env.EDGE_EXECUTABLE_OPTIONS = "--arch=ia32"; 
+    this.logger = logger || winston.createLogger({
+      level: 'info',
+      transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'bio.scanner.log' }),
+      ],
+    });
+    this.scanCompleteEvent = false;
+    this.pulseScanner = null;
+    this.imageString = '';
+    this.singleScanMode = true;
+    this.logger.info('BioScanner initialized');
+    this.dermalogApiPath = path.resolve(__dirname, 'bin','Dermalog.Imaging.Capturing.dll');
+    this.dermalogVC3Path = path.resolve(__dirname, 'bin','DermalogVC3.dll');
+    this.processor = {
+       execute: edge.func({        
+        references: [this.dermalogApiPath],
+        source: function() {
+          /*          
+          using System;
+          using System.Reflection;
+          using System.Threading.Tasks;
+          using Dermalog.Imaging.Capturing;
 
-    checkError: (msg, err) => {
-      if (err !== 0) {
-        let errorDetails = FingerLibrary.IEngine_GetErrorMessage(err);
-        console.log(`${msg}: Error ${err} - ${errorDetails}`);
-        //process.exit(err);
-      }
+          public class Startup {
+
+              public async Task<object> Invoke(dynamic input) {
+                Console.WriteLine("Task: "+input.task);
+                if ((string)input.task == "version"){
+                  Console.WriteLine("Reading SDK version...");
+                  //VC3LibHandler handler = VC3LibHandler.GetInstance();
+                  Console.WriteLine("VC3LibHandler initiated...");
+                  return await Task.Run(() => DeviceManager.Version);
+                }
+          
+                if ((string)input.task == "device")
+                  return await Task.Run(() => DeviceManager.GetDevice((DeviceIdentity)input.identity));
+          
+                if ((string)input.task == "devices")
+                  return await Task.Run(() => DeviceManager.GetAvailableDevices());
+          
+                if ((string)input.task == "identities")
+                  return await Task.Run(() => DeviceManager.GetDeviceIdentities());
+          
+                if ((string)input.task == "attached")
+                  return await Task.Run(() => DeviceManager.GetAttachedDevices((DeviceIdentity)input.identity));
+
+                return await Task.Run(() => "Unknown method");
+              }
+          }*/
+        }, 
+    }),
+    process: async (taskParams) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                this.processor.execute(taskParams, (error, result) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
+            return { error: null, result };
+        } catch (error) {
+            return { error, result: null };
+        }
     },
     
-    initialize: () => {
-        let ret = FingerLibrary.IEngine_Init();
-        Biometrics.checkError('IEngine_Init', ret);
-    },
+      getVersion: async () => this.processor.process({task: 'version'}),
+      getAvailableDevices: async () => await this.processor.process({task: 'devices'}),
+      getDeviceIdentities: async () => await this.processor.process({task: 'identities'}),
+      getDevice:           async (identity) => await this.processor.process({task: 'device', identity}),
+      getAttachedDevices:  async (identity) => await this.processor.process({task: 'attached', identity})
+    };
+  }
 
-    terminate: () => {    
-        let ret = FingerLibrary.IEngine_Terminate();
-        Biometrics.checkError('IEngine_Terminate', ret);
-    },
+  startUp(waitForCompletion = true, timeoutInSeconds = 0) {
+    this.singleScanMode = waitForCompletion;
+    this.stopSequence();
 
-    getHardwareId: () => {        
-        let length = Buffer.alloc(4); 
-        let ret = FingerLibrary.IEngine_GetHwid(null, length);
-        Biometrics.checkError('IEngine_GetHardwareId', ret);
+    if (this.initiateSequence() && this.pulseScanner) {
+      this.hookEvents();
+      this.pulseScanner.Start();
 
-        let hwId = Buffer.alloc(length.readInt32LE()); 
-        ret = FingerLibrary.IEngine_GetHwid(hwId, length); 
-        Biometrics.checkError("IEngine_GetHardwareId", ret);
-        console.log(`This computer's HWID is: ${hwId.toString()}`);
-        return hwId.toString();
-    },
+      if (waitForCompletion) {
+        this.scanCompleteEvent = false;
+        this.logger.info('Waiting for scan completion');
 
-    getVersion: () => {      
-        return FingerLibrary.IEngine_GetVersionString(); 
-    },
+        const waitTimeout = setTimeout(() => {
+          if (!this.scanCompleteEvent) {
+            this.logger.warn(`Scan did not complete within ${timeoutInSeconds} seconds.`);
+            this.stopSequence();
+          }
+        }, timeoutInSeconds * 1000);
 
-    loadImage: (fileName) => {
-        let width = Buffer.alloc(4); 
-        let height = Buffer.alloc(4); 
-        let length = Buffer.alloc(4);
-        let ret = FingerLibrary.IEngine_LoadBMP(fileName, width, height, null, length); 
-        Biometrics.checkError("IEngine_LoadBMP", ret); 
-        console.log(`First image: ${fileName} - image width: ${width.readInt32LE()}, image height: ${height.readInt32LE()}, length: ${length.readInt32LE()} B`); 
-        let data = Buffer.alloc(length.readInt32LE()); 
-        ret = FingerLibrary.IEngine_LoadBMP(fileName, width, height, data, length); 
-        Biometrics.checkError("IEngine_LoadBMP", ret); 
-        let quality = Buffer.alloc(4); 
-        ret = FingerLibrary.IEngine_GetImageQuality(width.readInt32LE(), height.readInt32LE(), data, quality); 
-        Biometrics.checkError("IEngine_GetImageQuality", ret);
-        console.log(`First image quality: ${quality}`);
-        return {width: width.readInt32LE(), height: height.readInt32LE(), quality, data: data};
-    },
+        this.once('scanComplete', () => {
+          clearTimeout(waitTimeout);
+          this.stopSequence();
+        });
+      }
+    }
+  }
 
-    loadISOTemplate: (fileName) => {
-        const isoLoadedTemplate = Buffer.alloc(FingerLibrary.IEngine_MAX_ISO_TEMPLATE_SIZE);
-        let ret = FingerLibrary.IEngine_ISO_LoadTemplate(fileName, isoLoadedTemplate);
-        Biometrics.checkError('ISO_LoadTemplate', ret);
+  initiateSequence() {
+    const scannerInfo = this.scannerScoutMaster();
+    if (scannerInfo.success) {
+      this.pulseScanner = this.processor.getDevice({ id: 'FG_ZF1', deviceId: scannerInfo.index }, true);
+      this.pulseScanner.CaptureMode = 'PREVIEW_IMAGE_AUTO_DETECT';
+      return true;
+    }
+    return false;
+  }
 
-        const sizePtr = Buffer.alloc(4);
-        const paramRet = ISO_GetTemplateParameter(isoLoadedTemplate, PARAM_TEMPLATE_SIZE, sizePtr);
-        Biometrics.checkError("ISO_GetTemplateParameter", paramRet);
+  stopSequence() {
+    if (this.pulseScanner) {
+      this.setLedState('FG_GREEN_LED', false);
+      this.setLedState('FG_RED_LED', false);
 
-        const templateSize = sizePtr.readInt32LE();
-        console.log(`Template size of loaded ISO template in bytes: ${templateSize}`);
-        return templateSize;
-    },
+      if (this.pulseScanner.IsCapturing) {
+        this.pulseScanner.Stop();
+      }
 
-    saveISOTemplate: (fileName, isoTemplate) => {        
-        let ret = FingerLibrary.IEngine_ISO_SaveTemplate(fileName, isoTemplate);
-        Biometrics.checkError('ISO_SaveTemplate', ret);
-    },
+      this.unhookEvents();
+      this.pulseScanner = null;
+    }
+  }
 
-    createIsoTemplate: (width, height, data) => { 
-        let isoTemplate = Buffer.alloc(1024); 
-        ret = FingerLibrary.ISO_CreateTemplate(width, height, data, isoTemplate);
-        Biometrics.checkError("ISO_CreateTemplate", ret);
-        return isoTemplate;
-    },
+  hookEvents() {
+    this.pulseScanner.OnStart = this.onScanningStart.bind(this);
+    this.pulseScanner.OnImage = this.onScanningImage.bind(this);
+    this.pulseScanner.OnDetect = this.onScanningDetect.bind(this);
+    this.pulseScanner.OnError = this.onScanningError.bind(this);
+    this.pulseScanner.OnWarning = this.onScanningWarning.bind(this);
+    this.pulseScanner.OnStop = this.onScanningStop.bind(this);
+  }
 
-    ansiTemplateSizeAndMinutiaeCount: (ansiTemplate) => {
-        let value = Buffer.alloc(4); 
-        let ret = FingerLibrary.ANSI_GetTemplateParameter(ansiTemplate, FingerLibrary.PARAM_TEMPLATE_SIZE, value); 
-        Biometrics.checkError('ANSI_GetTemplateParameter', ret);
-        console.log(`Template size of ANSI template in bytes: ${value.readInt32LE()}`); 
-        let minutiaeCount = Buffer.alloc(4); 
-        const minutiae = Buffer.alloc(256 * FingerLibrary.IENGINE_MINUTIAE_SIZE); 
-        ret = FingerLibrary.ANSI_GetMinutiae(ansiTemplate, minutiae, minutiaeCount); 
-        Biometrics.checkError('ANSI_GetMinutiae', ret); 
-        console.log(`Number of minutiae points in ANSI template: ${minutiaeCount.readInt32LE()}`);
-        return minutiaeCount.readInt32LE();
-    },
+  unhookEvents() {
+    this.pulseScanner.OnStart = null;
+    this.pulseScanner.OnImage = null;
+    this.pulseScanner.OnDetect = null;
+    this.pulseScanner.OnError = null;
+    this.pulseScanner.OnWarning = null;
+    this.pulseScanner.OnStop = null;
+  }
 
-    isoTemplateSizeAndMinutiaeCount: (isoTemplate) => {
-        let value = Buffer.alloc(4); 
-        let ret = FingerLibrary.ISO_GetTemplateParameter(isoTemplate, FingerLibrary.PARAM_TEMPLATE_SIZE, value); 
-        Biometrics.checkError('ISO_GetTemplateParameter', ret); 
-        console.log(`Template size of ISO template in bytes: ${value.readInt32LE()}`); 
-        let minutiaeCount = Buffer.alloc(4); 
-        const minutiae = Buffer.alloc(256 * FingerLibrary.IENGINE_MINUTIAE_SIZE); 
-        ret = FingerLibrary.ISO_GetMinutiae(isoTemplate, minutiae, minutiaeCount); 
-        Biometrics.checkError('ISO_GetMinutiae', ret); 
-        console.log(`Number of minutiae points in ISO template: ${minutiaeCount.readInt32LE()}`);
-        return minutiaeCount.readInt32LE();
-    },
+  scannerScoutMaster() {
+    try {
+      const attachedDevices = this.processor.getAttachedDevices({ id: 'FG_ZF1' }, true);
+      if (attachedDevices && attachedDevices.length > 0) {
+        this.logger.info('Scanner detected');
+        return { success: true, index: attachedDevices[0].index };
+      } else {
+        this.logger.error('No scanner detected');
+        return { success: false, index: -1 };
+      }
+    } catch (error) {
+      this.logger.error(`Error scouting scanner: ${error.message}`);
+      return { success: false, index: -1 };
+    }
+  }
 
-    setAndGetFingerPosition: (isoTemplate, position) => {
-        let ret = FingerLibrary.ISO_SetTemplateParameter(isoTemplate, FingerLibrary.PARAM_FINGER_POSITION, position); 
-        Biometrics.checkError('ISO_SetTemplateParameter', ret); 
-        let value = Buffer.alloc(4); 
-        ret = FingerLibrary.ISO_GetTemplateParameter(isoTemplate, FingerLibrary.PARAM_FINGER_POSITION, value); 
-        Biometrics.checkError('ISO_GetTemplateParameter', ret); 
-        console.log(`Finger position of ISO template: ${value.readInt32LE()}`);
-        return value.readInt32LE();
-    },
-    isoVerifyMatch: (isoTemplate1, isoTemplate2) => {      
-        let scoreISO = 0;
-        const maxRotation = 180;
-        let ret = FingerLibrary.IEngine_ISO_VerifyMatch(isoTemplate1, isoTemplate2, maxRotation, (score) => { scoreISO = score; });
-        Biometrics.checkError('ISO_VerifyMatch', ret);    
-        console.log(`Similarity score (calculated from ISO templates): ${scoreISO}`);
-        return scoreISO;
-    },
-    ansiVerifyMatch: (ansiTemplate1, ansiTemplate2) => {     
-        let scoreANSI = 0;
-        const maxRotation = 180;
-        let ret = FingerLibrary.IEngine_ANSI_VerifyMatch(ansiTemplate1, ansiTemplate2, maxRotation, (score) => { scoreANSI = score; });
-        Biometrics.checkError('ANSI_VerifyMatch', ret);
-        return scoreANSI;
+  onScanningStart() {
+    this.logger.info('Scanning started');
+  }
+
+  onScanningImage() {
+    this.setLedState('FG_GREEN_LED', true);
+  }
+
+  onScanningDetect(image) {
+    if (this.singleScanMode && this.scanCompleteEvent) return;
+
+    this.setLedState('FG_GREEN_LED', false);
+
+    if (!image) {
+      this.scanCompleteEvent = true;
+      this.emit('scanComplete');
+      return;
     }
 
+    try {
+      this.imageString = this.getTemplateString(image);
+      this.logger.info('Image captured successfully');
+      this.scanCompleteEvent = true;
+      this.emit('scanComplete');
+    } catch (error) {
+      this.logger.error(`Error processing image: ${error.message}`);
+    }
+  }
+
+  onScanningError(error) {
+    this.logger.error(`Scanner error: ${error}`);
+    this.setLedState('FG_RED_LED', true);
+    setTimeout(() => this.setLedState('FG_RED_LED', false), 1000);
+    this.stopSequence();
+  }
+
+  onScanningWarning(warning) {
+    this.logger.warn(`Scanner warning: ${warning}`);
+  }
+
+  onScanningStop() {
+    this.logger.info('Scanning stopped');
+  }
+
+  setLedState(property, status) {
+    if (this.pulseScanner) {
+      try {
+        this.pulseScanner.Property[property] = status ? 1 : 0;
+      } catch (error) {
+        this.logger.error(`Error setting LED state: ${error.message}`);
+      }
+    }
+  }
+
+  getTemplateString(image) {
+    // Implement image-to-template conversion logic here
+    // This may involve calling a native module or SDK
+    return Buffer.from(image).toString('base64');
+  }
 }
 
-module.exports = Biometrics;
+module.exports = BioScanner;
