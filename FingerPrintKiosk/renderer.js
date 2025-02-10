@@ -1,77 +1,70 @@
-document.getElementById('btnSelfTest').addEventListener('click', async () => {
-    try {
-        console.log('Starting Self Test...');
-        let hwId = await window.biometrics.getHardwareId();    
-        console.log(`This computer's Hardware ID is: ${hwId}`);
-    
-        const versionString = await window.biometrics.getVersion();    
-        console.log(`Version string: ${versionString}`);
-        
-        await window.biometrics.initialize();
-        const fp1 = 'fingerprint.bmp';
-        let response = await window.biometrics.loadImage(fp1);    
-        console.log(`First image: ${fp1} - image width: ${response.width}, image height: ${response.height}, length: ${response.length} B`);
-        
-        // Load BMP fingerprint2.bmp
-        const fp2 = 'fingerprint2.bmp';
-        const resp = await window.biometrics.loadImage(fp2);     
-        console.log(`Second image: ${fp2} - image width: ${resp.width}, image height: ${resp.height}, length: ${resp.length} B`);
-      
-        // ISO create template1
-        const {width, height, data} = response;
-        const isoTemplate1 = await window.biometrics.createIsoTemplate(width, height, data);
-        const isoTemplate2 = await window.biometrics.createIsoTemplate(resp.width, resp.height, resp.data);
-        const scoreISO = await window.biometrics.isoVerifyMatch(isoTemplate1, isoTemplate2);
-    
-        // ANSI create template
-        const ansiTemplate1 = await window.biometrics.createAnsiTemplate(width, height, data);
-        const ansiTemplate2 = await window.biometrics.createAnsiTemplate(resp.width, resp.height, resp.data);
-        
-        const scoreANSI = await window.biometrics.ansiVerifyMatch(ansiTemplate1, ansiTemplate2);
-    
-        // ANSI verify match
-        console.log(`Similarity score (calculated from ISO templates): ${scoreISO}`);
-        console.log(`Similarity score (calculated from ANSI templates): ${scoreANSI}`);
-    
-        // OPTIONAL - get template size and minutiae count
-        await window.biometrics.ansiTemplateSizeAndMinutiaeCount(ansiTemplate1);
-        await window.biometrics.isoTemplateSizeAndMinutiaeCount(isoTemplate1);
-    
-        // OPTIONAL - ISO save template1
-        await window.biometrics.saveISOTemplate('fingerprint.iso', isoTemplate1);
-        await window.biometrics.loadISOTemplate('fingerprint.iso');
-        await window.biometrics.setAndGetFingerPosition(isoTemplate1, IEngine.LEFT_THUMB);    
-        await window.biometrics.terminate();
-    
-    } catch (error) {
-        console.error('An error occurred:', error);
-    }
-      
-});
+console.log("Renderer: script loaded successfully!");
 
-document.getElementById('btnLoadTemplate').addEventListener('click', async () => {
-    const fileName = document.getElementById('fileName').value;
-    const output = await window.biometrics.loadISOTemplate(fileName);
-    document.getElementById('output').textContent = output;
-});
+document.addEventListener('DOMContentLoaded', () => {    
+    console.log("Renderer: DOM fully loaded! Attaching event listeners...");
+    const verifyBtn = document.getElementById('verify-btn');
+    const startCaptureBtn = document.getElementById('start-capture-btn');
+    const stopCaptureBtn = document.getElementById('stop-capture-btn');
+    const accountNumberInput = document.getElementById('account-number');
+    const fingerprintContainer = document.getElementById('fingerprint-container');
+    const statusMessage = document.getElementById('status-message');
+    const fingerprintPlaceholder = document.getElementById('fingerprint-placeholder');
+    const sdkVersionSpan = document.getElementById('sdk-version');
+    const availableDevicesSpan = document.getElementById('available-devices');
 
-document.getElementById('btnInitiate').addEventListener('click', async () => {
-    const accountNumber = document.getElementById('accountNumber').value;
-    const kioskStationID = document.getElementById('kioskStationID').value;
-    const response = await window.handlers.handleInitiate(accountNumber, kioskStationID);
-    console.log('Initiate Request Response:', response);
-});
+    // Verify Account
+    verifyBtn.addEventListener('click', () => {
+        const accountNumber = accountNumberInput.value.trim();
+        if (!accountNumber) {
+            alert('Please enter an account number.');
+            return;
+        }
+        console.log("Verify button clicked. Sending IPC event...");
+        window.Dermalog.send('verify-account', accountNumber);
+    });
 
-document.getElementById('btnGetAll').addEventListener('click', async () => {
-    const kioskStationID = document.getElementById('kioskStationID').value;
-    const response = await window.handlers.handleGetFingers(kioskStationID);
-    console.log('Poll Requests Response:', response);
-});
+    // Start Capture
+    startCaptureBtn.addEventListener('click', () => {
+        window.Dermalog.send('start-capture');
+    });
 
-document.getElementById('btnVerify').addEventListener('click', async () => {
-    const id = document.getElementById('requestId').value;
-    const status = document.getElementById('status').value;
-    const fingerprintTemplate = document.getElementById('fingerprintTemplate').value;
-    const response = await window.handlers.handleVerifyFinger(id, status, fingerprintTemplate);
-    console.log('Update Status Response:', response);
+    // Stop Capture
+    stopCaptureBtn.addEventListener('click', () => {
+        window.Dermalog.send('stop-capture');
+    });
+
+    // Listen for Account Verification Result
+    window.Dermalog.on('account-verified', () => {
+        fingerprintContainer.style.display = 'block';
+        statusMessage.textContent = "Ready to Capture";
+
+        // Request SDK Version and Available Devices
+        window.Dermalog.send('get-sdk-version');
+        window.Dermalog.send('get-available-devices');
+    });
+
+    // Display SDK Version
+    window.Dermalog.on('sdk-version', (event, version) => {
+        sdkVersionSpan.textContent = version;
+    });
+
+    // Display Available Devices
+    window.Dermalog.on('available-devices', (event, devices) => {
+        availableDevicesSpan.textContent = devices.length > 0 ? devices.join(', ') : 'No devices found';
+    });
+
+    // Capture Status Updates
+    window.Dermalog.on('capture-started', () => {
+        statusMessage.textContent = "Place Finger";
+        fingerprintPlaceholder.src = "assets/fingerprint.png";
+    });
+
+    window.Dermalog.on('capture-completed', () => {
+        statusMessage.textContent = "Capture Successful!";
+        fingerprintPlaceholder.src = "assets/checkmark.png";
+    });
+
+    window.Dermalog.on('capture-error', (event, message) => {
+        statusMessage.textContent = "Capture Failed: " + message;
+    });
 });

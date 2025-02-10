@@ -1,34 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"/>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'"/>
-    <title>Fingerprint Kiosk</title>
-</head>
-<body>
-    <h1>Fingerprint Kiosk</h1>
-    <div>
-        <h2>Initiate Request</h2>
-        <input id="accountNumber" type="text" placeholder="Account Number">
-        <input id="kioskStationID" type="text" placeholder="Kiosk Station ID">
-        <button id="btnInitiate">Initiate Request</button>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>BioPrint 1.0.0</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, button { padding: 10px; margin: 10px; cursor: pointer; }
+        #fingerprint-container { display: none; margin-top: 20px; }
+        #fingerprint-placeholder { width: 150px; height: 150px; }
+        .info { font-weight: bold; }
+    </style>
+    <script defer src="renderer.js"></script>
+  </head>
+  <body>
+    <h1>💖 BioPrint 1.0.0</h1>
+    <p>Welcome to Pajuno FingerPrint Validator.</p>       
+    <input type="text" id="account-number" placeholder="Enter Account Number">
+    <button id="verify-btn">Verify</button>
+    <div id="fingerprint-container">
+        <p class="info">SDK Version: <span id="sdk-version">Loading...</span></p>
+        <p class="info">Available Devices: <span id="available-devices">Checking...</span></p>
+
+        <p id="status-message">Ready to Capture</p>
+        <img id="fingerprint-placeholder" src="bin/fingerprint.bmp" alt="Place Finger">
+
+        <button id="start-capture-btn">Start Capture</button>
+        <button id="stop-capture-btn">Stop Capture</button>
     </div>
 
-    <div>
-        <h2>FingerPrint Verification</h2>
-        <input id="requestId" type="text" placeholder="Request ID">
-        <input id="status" type="text" placeholder="Status">
-        <img src="bin/fingerprint.bmp" height="150" width="100" alt/>
-        <button id="btnVerify">Scan And Verify</button>
-    </div>
-
-    <div>
-        <h2>Poll Requests</h2>
-        <input id="kioskStationID" type="text" placeholder="Kiosk Station ID">
-        <button id="btnGetAll">Poll Requests</button>
-        <button id="btnSelfTest">Self Test</button>
-    </div>
-
-    <script src="renderer.js"></script>
-</body>
+  </body>
 </html>

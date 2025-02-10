@@ -1,19 +1,35 @@
 {
-  "name": "fingerprintkiosk",
+  "name": "FPValidator",
   "version": "1.0.0",
-  "description": "",
+  "description": "Finger Identity Validator",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "setup": "npx electron-forge import",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "config": {
+    "forge": {
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "arch": "ia32"
+          }
+        }
+      ]
+    }
+  },
   "dependencies": {
     "axios": "^1.7.7",
-    "edge-js": "^23.1.4",
-    "electron": "^33.0.2",
+    "edge-js-electron": "^1.0.1",
+    "electron": "^34.1.1",
+    "electron-edge-js": "^34.0.0",
     "koffi": "^2.9.1",
     "node-api-dotnet": "^0.8.20",
     "ref-array-napi": "^1.2.2",

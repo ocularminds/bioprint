@@ -1,4 +1,6 @@
 # FPValidator_Node
+dism /online /enable-feature /featurename:NetFx3 /all /NoRestart
+
 
 ## Fingerprint Server
 This project is a Fingerprint API Service built using Node.js, Express, and EventEmitter for handling biometric fingerprint verification.
